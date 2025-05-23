@@ -41,7 +41,7 @@ func (s *PhraseStreamService) CreatePhraseStream(stream *domain.PhraseStream, au
 	if err != nil {
 		return uuid.Nil, err
 	}
-	//err = addNoise(audio.PathToAudio, audio.Noise)
+	err = addNoise(audio.PathToAudio, audio.Noise)
 	if err != nil {
 		return uuid.Nil, err
 	}
