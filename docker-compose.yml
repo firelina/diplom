@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      - network-security
+  mainapp:
+    container_name: diplom
+    image: polinamiki/diplom
+    ports:
+      - "8080:8080"
+    networks:
+      - network-security
+
+networks:
+  network-security:
+    driver: bridge
