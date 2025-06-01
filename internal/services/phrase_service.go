@@ -38,6 +38,6 @@ func (s *PhraseService) DeletePhrase(id uuid.UUID) error {
 	return s.repo.Delete(id)
 }
 
-func (s *PhraseService) GetAllPhrases() ([]domain.Phrase, error) {
-	return s.repo.GetAll()
+func (s *PhraseService) GetAllPhrases(text string) ([]domain.Phrase, error) {
+	return s.repo.GetAll(text)
 }

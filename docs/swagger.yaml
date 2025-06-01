@@ -1,0 +1,612 @@
+basePath: /api/v1
+definitions:
+  domain.Answer:
+    properties:
+      audio_answer_id:
+        type: string
+      id:
+        type: string
+      is_correct:
+        type: boolean
+      text:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.Phrase:
+    properties:
+      id:
+        type: string
+      phrase_type:
+        type: string
+      text:
+        type: string
+      type_id:
+        type: string
+    type: object
+  domain.PhraseType:
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+  models.CreateAnswerRequest:
+    properties:
+      path:
+        type: string
+      phrase_stream_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.CreatePhraseRequest:
+    properties:
+      text:
+        type: string
+      type_id:
+        type: string
+    type: object
+  models.CreatePhraseStreamRequest:
+    properties:
+      accent:
+        type: string
+      noise:
+        type: number
+      path:
+        type: string
+      phrase_id:
+        type: string
+      scenario_id:
+        type: string
+    type: object
+  models.CreateScenarioRequest:
+    properties:
+      title:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.CreateUserRequest:
+    properties:
+      is_admin:
+        type: boolean
+      login:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  models.LoginUserRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  models.PhraseProgress:
+    properties:
+      phrase:
+        type: string
+      phrase_stream_status:
+        type: string
+      scenario_status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for a pet store.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: My Awesome API
+  version: "1.0"
+paths:
+  /admin/answers:
+    get:
+      description: Returns a list of all student answers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Answer'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all student answers
+      tags:
+      - answers
+  /admin/answers/{id}:
+    delete:
+      description: Deletes a student answer by its ID
+      parameters:
+      - description: Answer ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a student answer
+      tags:
+      - answers
+  /admin/phrase_types:
+    get:
+      description: Returns all phrase types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.PhraseType'
+            type: array
+        "500":
+          description: Internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all phrase types
+      tags:
+      - phrase_types
+    post:
+      consumes:
+      - application/json
+      description: Creates a new phrase type
+      parameters:
+      - description: New Phrase Type
+        in: body
+        name: phrase_type
+        required: true
+        schema:
+          $ref: '#/definitions/domain.PhraseType'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ID of created phrase type
+          schema:
+            type: integer
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create new phrase type
+      tags:
+      - phrase_types
+  /admin/phrases:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all phrases
+      parameters:
+      - description: Поисковый текст
+        in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Phrase'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all phrases
+      tags:
+      - phrases
+    post:
+      consumes:
+      - application/json
+      description: Adds a new phrase to the system
+      parameters:
+      - description: New Phrase
+        in: body
+        name: phrase
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePhraseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created ID
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new phrase
+      tags:
+      - phrases
+  /admin/phrases/{id}:
+    delete:
+      description: Deletes a phrase from the system
+      parameters:
+      - description: Phrase ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a phrase by ID
+      tags:
+      - phrases
+    get:
+      description: Returns a phrase by its UUID
+      parameters:
+      - description: Phrase ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Phrase'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a phrase by ID
+      tags:
+      - phrases
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing phrase
+      parameters:
+      - description: Phrase ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Phrase
+        in: body
+        name: phrase
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Phrase'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Phrase'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a phrase by ID
+      tags:
+      - phrases
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет вход пользователя в систему и возвращает информацию об
+        успешной аутентификации
+      parameters:
+      - description: Данные для входа (логин и пароль)
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная аутентификация" {
+          schema:
+            type: object
+        "400":
+          description: Неверный формат запроса" {
+          schema:
+            type: object
+        "401":
+          description: Неверные учетные данные" {
+          schema:
+            type: object
+      summary: Аутентификация пользователя
+      tags:
+      - auth
+  /student/{user_id}/get_phrases:
+    get:
+      description: Returns a list of phrases associated with the given user
+      parameters:
+      - description: User ID
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Phrase'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get student phrases
+      tags:
+      - progress
+  /student/{user_id}/phrase/get_progress:
+    get:
+      description: Returns progress data for the user's phrase practice
+      parameters:
+      - description: User ID
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PhraseProgress'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get phrase progress
+      tags:
+      - progress
+  /student/scenarios/answer:
+    post:
+      consumes:
+      - application/json
+      description: Saves a student's audio answer to a phrase stream
+      parameters:
+      - description: Student audio answer data
+        in: body
+        name: answer
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAnswerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created answer ID
+          schema:
+            type: string
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a student answer
+      tags:
+      - scenarios
+  /student/scenarios/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new scenario for a student
+      parameters:
+      - description: Scenario data
+        in: body
+        name: scenario
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateScenarioRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created scenario ID
+          schema:
+            type: string
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new scenario
+      tags:
+      - scenarios
+  /student/scenarios/phrase/listen:
+    post:
+      consumes:
+      - application/json
+      description: Initializes a new phrase stream and stores associated audio
+      parameters:
+      - description: Phrase stream data
+        in: body
+        name: phraseStream
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePhraseStreamRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created phrase stream ID
+          schema:
+            type: string
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a phrase stream
+      tags:
+      - scenarios
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя в системе
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ID созданного пользователя
+          schema:
+            type: integer
+        "400":
+          description: Неверный формат данных
+          schema:
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: object
+      summary: Регистрация нового пользователя
+      tags:
+      - users
+swagger: "2.0"

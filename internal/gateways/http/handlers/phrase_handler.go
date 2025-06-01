@@ -131,12 +131,15 @@ func (h *PhraseHandler) DeletePhrase(c *gin.Context) {
 // @Summary      Get all phrases
 // @Description  Returns a list of all phrases
 // @Tags         phrases
+// @Accept       json
 // @Produce      json
+// @Param        text  query     string  false  "Поисковый текст"
 // @Success      200  {array}   domain.Phrase
 // @Failure      500  {object}  map[string]string
 // @Router       /admin/phrases [get]
 func (h *PhraseHandler) GetAllPhrases(c *gin.Context) {
-	phrases, err := h.phraseService.GetAllPhrases()
+	text := c.Query("text")
+	phrases, err := h.phraseService.GetAllPhrases(text)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

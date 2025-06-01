@@ -46,9 +46,9 @@ func (r *PhraseRepository) Delete(id uuid.UUID) error {
 	return err
 }
 
-func (r *PhraseRepository) GetAll() ([]domain.Phrase, error) {
-	query := `SELECT id, text, type_id FROM diplom.phrases`
-	rows, err := r.db.Query(context.Background(), query)
+func (r *PhraseRepository) GetAll(textSearch string) ([]domain.Phrase, error) {
+	query := `SELECT id, text, type_id FROM diplom.phrases WHERE text ILIKE '%' || $1 || '%'`
+	rows, err := r.db.Query(context.Background(), query, textSearch)
 	if err != nil {
 		return nil, err
 	}
