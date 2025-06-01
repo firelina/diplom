@@ -36,25 +36,25 @@ func NewStudentAnswerService(answer *repository.AnswerRepository, audio *reposit
 		phraseStream: phs, phrase: ph, speechKit: client.NewYandexSpeechClient()}
 }
 
-func (s *StudentAnswerService) CreateAnswer(answer *domain.Answer, audio *domain.AudioAnswer, phraseStreamID uuid.UUID) (uuid.UUID, bool, error) {
+func (s *StudentAnswerService) CreateAnswer(answer *domain.Answer, audio *domain.AudioAnswer, phraseStreamID uuid.UUID) (uuid.UUID, bool, string, error) {
 	phraseStream, err := s.phraseStream.GetByID(phraseStreamID)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
 	phrase, err := s.phrase.GetByID(phraseStream.PhraseID)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
 
 	text, err := s.speechKit.RecognizeSpeech(audio.PathToAudio)
 	similirity := CosineSimilarity(phrase.Text, text)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
 
 	var status string
 	var isCorrect bool
-	if similirity > 0.5 {
+	if similirity > 0.1 {
 		isCorrect = true
 		status = "success"
 	} else {
@@ -64,21 +64,21 @@ func (s *StudentAnswerService) CreateAnswer(answer *domain.Answer, audio *domain
 
 	audioID, err := s.audioAnswerRepository.Create(audio)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
 	answer.AudioAnswerID = audioID
 	answer.Text = text
 	answer.IsCorrect = isCorrect
 	answerID, err := s.answerRepository.Create(answer)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
 
 	err = s.phraseStream.Update(phraseStreamID, answerID, status)
 	if err != nil {
-		return uuid.Nil, false, err
+		return uuid.Nil, false, "", err
 	}
-	return answerID, isCorrect, err
+	return answerID, isCorrect, text, err
 }
 
 func (s *StudentAnswerService) CreateAudioAnswer(answer *domain.AudioAnswer) (uuid.UUID, error) {

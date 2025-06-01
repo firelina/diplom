@@ -18,7 +18,7 @@ func NewAudioPhraseRepository(db *pgxpool.Pool) *AudioPhraseRepository {
 func (r *AudioPhraseRepository) Create(audioPhrase *domain.AudioPhrase) (uuid.UUID, error) {
 	id := uuid.New()
 	query := `INSERT INTO diplom.audio_phrases (id, path_to_audio, phrase_id, accent, noise) VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.Exec(context.Background(), query, id, audioPhrase.PathToAudio, audioPhrase.PhraseID, audioPhrase.Accent, audioPhrase.Noise)
+	_, err := r.db.Exec(context.Background(), query, id, audioPhrase.PathToAudio, audioPhrase.PhraseID, audioPhrase.Accent, int(audioPhrase.Noise))
 	return id, err
 }
 

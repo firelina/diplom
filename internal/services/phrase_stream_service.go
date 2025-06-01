@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
-	"github.com/google/uuid"
-	"github.com/jfreymuth/oggvorbis"
+	"github.com/hajimehoshi/go-mp3"
 	"io"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"time"
+
+	//"fmt"
+	"github.com/google/uuid"
 )
 
 type PhraseStreamService struct {
@@ -65,76 +66,98 @@ func (s *PhraseStreamService) GetStudentProgress(userID uuid.UUID) ([][]string, 
 	return s.streams.GetStudentProgress(userID)
 }
 
-func addNoise(inputPath string, noiseLevel int) error {
-	inFile, err := os.Open(inputPath)
+func addNoise(inputPath string, noiseLevel float64) error {
+	f, err := os.Open(inputPath)
 	if err != nil {
-		return fmt.Errorf("ошибка при открытии файла: %w", err)
+		return fmt.Errorf("ошибка открытия MP3: %w", err)
 	}
-	defer inFile.Close()
+	defer f.Close()
 
-	decoder, err := oggvorbis.NewReader(inFile)
+	decoder, err := mp3.NewDecoder(f)
 	if err != nil {
-		return fmt.Errorf("ошибка при декодировании OGG: %w", err)
+		return fmt.Errorf("ошибка создания декодера: %w", err)
 	}
 
-	sampleRate := decoder.SampleRate()
-	numChannels := decoder.Channels()
+	pcmBytes, err := io.ReadAll(decoder)
+	if err != nil {
+		return fmt.Errorf("ошибка чтения PCM данных: %w", err)
+	}
 
-	var samples []float64
-	buffer := make([]float32, 8192)
-
-	for {
-		n, err := decoder.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("ошибка при чтении сэмплов: %w", err)
-		}
-		for i := 0; i < n; i++ {
-			samples = append(samples, float64(buffer[i]))
-		}
+	pcm := make([]int16, len(pcmBytes)/2)
+	for i := 0; i < len(pcm); i++ {
+		pcm[i] = int16(pcmBytes[2*i]) | int16(pcmBytes[2*i+1])<<8
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	for i := range samples {
-		samples[i] += rand.NormFloat64() * float64(noiseLevel)
-		if samples[i] > 1 {
-			samples[i] = 1
-		} else if samples[i] < -1 {
-			samples[i] = -1
-		}
+	maxInt16 := 32767
+	for i := range pcm {
+		noise := int(float64(maxInt16) * noiseLevel * rand.NormFloat64())
+		val := int(pcm[i]) + noise
+		pcm[i] = int16(clamp(val, -maxInt16, maxInt16))
 	}
 
-	intSamples := make([]int, len(samples))
-	for i, s := range samples {
-		intSamples[i] = int(s * (1 << 15))
-	}
-
-	buf := &audio.IntBuffer{
-		Format: &audio.Format{
-			NumChannels: numChannels,
-			SampleRate:  sampleRate,
-		},
-		Data:           intSamples,
-		SourceBitDepth: 16,
-	}
-
-	outputPath := inputPath[:len(inputPath)-len(filepath.Ext(inputPath))] + "_noisy.wav"
-	outFile, err := os.Create(outputPath)
+	outputWav := "output1.wav"
+	outFile, err := os.Create(outputWav)
 	if err != nil {
-		return fmt.Errorf("ошибка при создании WAV-файла: %w", err)
+		return fmt.Errorf("ошибка создания WAV файла: %w", err)
 	}
 	defer outFile.Close()
 
-	encoder := wav.NewEncoder(outFile, sampleRate, 16, numChannels, 1)
-	if err := encoder.Write(buf); err != nil {
-		return fmt.Errorf("ошибка при записи WAV: %w", err)
+	enc := wav.NewEncoder(outFile, 44100, 16, 2, 1) // Частота и каналы нужно брать из mp3, упрощено 44.1kHz, стерео
+	defer enc.Close()
+
+	buf := &audio.IntBuffer{
+		Data:           make([]int, len(pcm)),
+		Format:         &audio.Format{NumChannels: 2, SampleRate: 44100},
+		SourceBitDepth: 16,
 	}
-	if err := encoder.Close(); err != nil {
-		return fmt.Errorf("ошибка при закрытии WAV-файла: %w", err)
+	for i, v := range pcm {
+		buf.Data[i] = int(v)
 	}
 
-	fmt.Println("WAV с шумом успешно сохранён в", outputPath)
+	if err := enc.Write(buf); err != nil {
+		return fmt.Errorf("ошибка записи WAV: %w", err)
+	}
+
+	//tempWav := "temp_output.wav"
+	//outFile, err := os.Create(tempWav)
+	//if err != nil {
+	//	return fmt.Errorf("ошибка создания WAV файла: %w", err)
+	//}
+	//defer outFile.Close()
+	//
+	//enc := wav.NewEncoder(outFile, 44100, 16, 2, 1) // можно уточнить параметры у decoder
+	//defer enc.Close()
+	//
+	//intBuf := &audio.IntBuffer{
+	//	Data:           make([]int, len(pcm)),
+	//	Format:         &audio.Format{SampleRate: 44100, NumChannels: 2},
+	//	SourceBitDepth: 16,
+	//}
+	//for i, v := range pcm {
+	//	intBuf.Data[i] = int(v)
+	//}
+	//if err := enc.Write(intBuf); err != nil {
+	//	return fmt.Errorf("ошибка записи WAV: %w", err)
+	//}
+	//
+	//// 4. Конвертируем в MP3
+	//cmd := exec.Command("lame", tempWav, "output.mp3")
+	//if out, err := cmd.CombinedOutput(); err != nil {
+	//	return fmt.Errorf("ошибка при вызове lame: %w (%s)", err, string(out))
+	//}
+	//
+	//// Удаляем временный WAV
+	//_ = os.Remove(tempWav)
 	return nil
+}
+
+func clamp(val, min, max int) int {
+	if val < min {
+		return min
+	}
+	if val > max {
+		return max
+	}
+	return val
 }

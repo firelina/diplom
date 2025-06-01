@@ -9,10 +9,11 @@ import (
 
 type PhraseRepository struct {
 	db *pgxpool.Pool
+	pr *PhraseTypeRepository
 }
 
-func NewPhraseRepository(db *pgxpool.Pool) *PhraseRepository {
-	return &PhraseRepository{db: db}
+func NewPhraseRepository(db *pgxpool.Pool, ph *PhraseTypeRepository) *PhraseRepository {
+	return &PhraseRepository{db: db, pr: ph}
 }
 
 func (r *PhraseRepository) Create(phrase *domain.Phrase) (uuid.UUID, error) {
@@ -59,6 +60,11 @@ func (r *PhraseRepository) GetAll() ([]domain.Phrase, error) {
 		if err := rows.Scan(&phrase.ID, &phrase.Text, &phrase.TypeID); err != nil {
 			return nil, err
 		}
+		phType, err := r.pr.GetByID(phrase.TypeID)
+		if err != nil {
+			return nil, err
+		}
+		phrase.PhraseType = phType.Title
 		phrases = append(phrases, phrase)
 	}
 	return phrases, nil

@@ -41,7 +41,7 @@ func (h *StudentAnswerHandler) CreateAnswer(c *gin.Context) {
 	phraseStreamID, err := uuid.Parse(newAnswer.PhraseStreamID)
 	recordTime := time.Now()
 
-	id, isCorrect, err := h.studentAnswerService.CreateAnswer(&domain.Answer{
+	id, isCorrect, answerText, err := h.studentAnswerService.CreateAnswer(&domain.Answer{
 		UserID: userID,
 	}, &domain.AudioAnswer{
 		PathToAudio: newAnswer.Path,
@@ -51,7 +51,7 @@ func (h *StudentAnswerHandler) CreateAnswer(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, models.CreateAnswerResponse{AnswerID: id, IsCorrect: isCorrect})
+	c.JSON(http.StatusCreated, models.CreateAnswerResponse{AnswerID: id, IsCorrect: isCorrect, Text: answerText})
 }
 
 func (h *StudentAnswerHandler) GetAnswer(c *gin.Context) {
