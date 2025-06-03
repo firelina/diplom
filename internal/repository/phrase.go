@@ -7,12 +7,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PhraseRepository struct {
-	db *pgxpool.Pool
-	pr *PhraseTypeRepository
+type PhraseRepositoryInterface interface {
+	Create(phrase *domain.Phrase) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*domain.Phrase, error)
+	Update(phrase *domain.Phrase) error
+	Delete(id uuid.UUID) error
+	GetAll(textSearch string) ([]domain.Phrase, error)
 }
 
-func NewPhraseRepository(db *pgxpool.Pool, ph *PhraseTypeRepository) *PhraseRepository {
+type PhraseRepository struct {
+	db *pgxpool.Pool
+	pr PhraseTypeRepositoryInterface
+}
+
+func NewPhraseRepository(db *pgxpool.Pool, ph PhraseTypeRepositoryInterface) *PhraseRepository {
 	return &PhraseRepository{db: db, pr: ph}
 }
 

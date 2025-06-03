@@ -7,16 +7,24 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type PhraseStreamRepositoryInterface interface {
+	Create(phraseStream *domain.PhraseStream) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*domain.PhraseStream, error)
+	Update(id uuid.UUID, answerID uuid.UUID, status string) error
+	Delete(id uuid.UUID) error
+	GetAll() ([]domain.PhraseStream, error)
+	GetStudentPhrases(userID uuid.UUID) ([]string, error)
+	GetStudentProgress(userID uuid.UUID) ([][]string, error)
+}
+
 type PhraseStreamRepository struct {
 	db *pgxpool.Pool
 }
 
-// NewPhraseStreamRepository initializes a new PhraseStreamRepository
 func NewPhraseStreamRepository(db *pgxpool.Pool) *PhraseStreamRepository {
 	return &PhraseStreamRepository{db: db}
 }
 
-// Create inserts a new PhraseStream record into the database
 func (r *PhraseStreamRepository) Create(phraseStream *domain.PhraseStream) (uuid.UUID, error) {
 	id := uuid.New()
 	query := `INSERT INTO diplom.phrase_streams (id, audio_phrase_id, scenario_id, answer_id, phrase_id, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
@@ -24,7 +32,6 @@ func (r *PhraseStreamRepository) Create(phraseStream *domain.PhraseStream) (uuid
 	return id, err
 }
 
-// GetByID retrieves a PhraseStream record by its ID
 func (r *PhraseStreamRepository) GetByID(id uuid.UUID) (*domain.PhraseStream, error) {
 	query := `SELECT id, audio_phrase_id, scenario_id, answer_id, phrase_id, status FROM diplom.phrase_streams WHERE id = $1`
 	phraseStream := &domain.PhraseStream{}

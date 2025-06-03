@@ -7,6 +7,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type PhraseTypeRepositoryInterface interface {
+	Create(phraseType *domain.PhraseType) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*domain.PhraseType, error)
+	Update(phraseType *domain.PhraseType) error
+	Delete(id uuid.UUID) error
+	GetAll() ([]domain.PhraseType, error)
+}
+
 type PhraseTypeRepository struct {
 	db *pgxpool.Pool
 }

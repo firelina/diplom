@@ -7,6 +7,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type AudioPhraseRepositoryInterface interface {
+	Create(audioPhrase *domain.AudioPhrase) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*domain.AudioPhrase, error)
+	Update(audioPhrase *domain.AudioPhrase) error
+	Delete(id uuid.UUID) error
+	GetAll() ([]domain.AudioPhrase, error)
+}
+
 type AudioPhraseRepository struct {
 	db *pgxpool.Pool
 }

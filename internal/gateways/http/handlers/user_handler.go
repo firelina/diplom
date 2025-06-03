@@ -5,6 +5,7 @@ import (
 	"diplom/internal/gateways/http/models"
 	"diplom/internal/services"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
@@ -33,10 +34,15 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
 	userID, err := h.user.CreateUser(&domain.User{
 		Name:     newUser.Name,
 		Login:    newUser.Login,
-		Password: newUser.Password,
+		Password: string(hashedPassword),
 		Role:     newUser.IsAdmin,
 	})
 	if err != nil {
@@ -74,8 +80,10 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 	user, err := h.user.Login(loginUser.Login, loginUser.Password)
+
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": user.Name})
 

@@ -4,20 +4,14 @@ import (
 	"diplom/internal/domain"
 	"diplom/internal/repository"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
-//type UserService interface {
-//	CreateUser(user *domain.User) error
-//	GetUserByID(id uuid.UUID) (*domain.User, error)
-//	Login(login string, password string) (*domain.User, error)
-//	IsAdmin(userID uuid.UUID) bool
-//}
-
 type UserService struct {
-	repo *repository.UserRepository
+	repo repository.UserRepositoryInterface
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
+func NewUserService(repo repository.UserRepositoryInterface) *UserService {
 	return &UserService{repo: repo}
 }
 
@@ -38,5 +32,10 @@ func (u *UserService) IsAdmin(userID uuid.UUID) bool {
 }
 
 func (u *UserService) Login(login string, password string) (*domain.User, error) {
-	return u.repo.Login(login, password)
+	user, err := u.repo.Login(login)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	return user, err
 }

@@ -7,6 +7,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type UserRepositoryInterface interface {
+	GetByID(id uuid.UUID) (*domain.User, error)
+	Login(login string) (*domain.User, error)
+	Update(user *domain.User) error
+	Delete(id uuid.UUID) error
+	Create(user *domain.User) (uuid.UUID, error)
+}
+
 type UserRepository struct {
 	db *pgxpool.Pool
 }
@@ -64,10 +72,10 @@ func (r *UserRepository) Delete(id uuid.UUID) error {
 //	return users, nil
 //}
 
-func (r *UserRepository) Login(login string, password string) (*domain.User, error) {
-	query := `SELECT id, name, login, password, role FROM diplom.users WHERE login = $1 AND password = $2`
+func (r *UserRepository) Login(login string) (*domain.User, error) {
+	query := `SELECT id, name, login, password, role FROM diplom.users WHERE login = $1`
 	user := &domain.User{}
-	err := r.db.QueryRow(context.Background(), query, login, password).Scan(&user.ID, &user.Name, &user.Login, &user.Password, &user.Role)
+	err := r.db.QueryRow(context.Background(), query, login).Scan(&user.ID, &user.Name, &user.Login, &user.Password, &user.Role)
 
 	if err != nil {
 		return nil, err

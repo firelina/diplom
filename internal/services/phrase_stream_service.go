@@ -18,13 +18,14 @@ import (
 )
 
 type PhraseStreamService struct {
-	streams   *repository.PhraseStreamRepository
-	audio     *repository.AudioPhraseRepository
-	phrase    *repository.PhraseRepository
+	streams   repository.PhraseStreamRepositoryInterface
+	audio     repository.AudioPhraseRepositoryInterface
+	phrase    repository.PhraseRepositoryInterface
 	speechKit *client.YandexSpeechClient
 }
 
-func NewPhraseStreamService(p *repository.PhraseStreamRepository, a *repository.AudioPhraseRepository, ph *repository.PhraseRepository) *PhraseStreamService {
+func NewPhraseStreamService(p repository.PhraseStreamRepositoryInterface, a repository.AudioPhraseRepositoryInterface,
+	ph repository.PhraseRepositoryInterface) *PhraseStreamService {
 	return &PhraseStreamService{
 		streams:   p,
 		audio:     a,
@@ -96,7 +97,7 @@ func addNoise(inputPath string, noiseLevel float64) error {
 		pcm[i] = int16(clamp(val, -maxInt16, maxInt16))
 	}
 
-	outputWav := "output1.wav"
+	outputWav := inputPath
 	outFile, err := os.Create(outputWav)
 	if err != nil {
 		return fmt.Errorf("ошибка создания WAV файла: %w", err)
@@ -119,36 +120,6 @@ func addNoise(inputPath string, noiseLevel float64) error {
 		return fmt.Errorf("ошибка записи WAV: %w", err)
 	}
 
-	//tempWav := "temp_output.wav"
-	//outFile, err := os.Create(tempWav)
-	//if err != nil {
-	//	return fmt.Errorf("ошибка создания WAV файла: %w", err)
-	//}
-	//defer outFile.Close()
-	//
-	//enc := wav.NewEncoder(outFile, 44100, 16, 2, 1) // можно уточнить параметры у decoder
-	//defer enc.Close()
-	//
-	//intBuf := &audio.IntBuffer{
-	//	Data:           make([]int, len(pcm)),
-	//	Format:         &audio.Format{SampleRate: 44100, NumChannels: 2},
-	//	SourceBitDepth: 16,
-	//}
-	//for i, v := range pcm {
-	//	intBuf.Data[i] = int(v)
-	//}
-	//if err := enc.Write(intBuf); err != nil {
-	//	return fmt.Errorf("ошибка записи WAV: %w", err)
-	//}
-	//
-	//// 4. Конвертируем в MP3
-	//cmd := exec.Command("lame", tempWav, "output.mp3")
-	//if out, err := cmd.CombinedOutput(); err != nil {
-	//	return fmt.Errorf("ошибка при вызове lame: %w (%s)", err, string(out))
-	//}
-	//
-	//// Удаляем временный WAV
-	//_ = os.Remove(tempWav)
 	return nil
 }
 

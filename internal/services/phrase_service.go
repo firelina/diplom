@@ -15,10 +15,10 @@ import (
 //}
 
 type PhraseService struct {
-	repo *repository.PhraseRepository
+	repo repository.PhraseRepositoryInterface
 }
 
-func NewPhraseService(repo *repository.PhraseRepository) *PhraseService {
+func NewPhraseService(repo repository.PhraseRepositoryInterface) *PhraseService {
 	return &PhraseService{repo: repo}
 }
 
